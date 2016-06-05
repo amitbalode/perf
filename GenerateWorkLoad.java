@@ -7,7 +7,10 @@ class GenerateWorkLoad {
 
 	public static void main(String[] args) throws IOException{
 		Map<String,Integer> cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
-		testFileWrite(((int)cmdLineArgs.get("fileSizeInMB"))*1024,(int)cmdLineArgs.get("speedInMBPerSec"));
+		System.out.println("Printing command line arguments or their default values: "+cmdLineArgs);
+		for (int i = 0; i < (int)cmdLineArgs.get("iterations"); i++){
+			testFileWrite(i,((int)cmdLineArgs.get("fileSizeInMB"))*1024,(int)cmdLineArgs.get("speedInMBPerSec"));
+		}
 	}
 
 
@@ -17,13 +20,13 @@ class GenerateWorkLoad {
  	* b)To write with *speedInMBPerSec* speed
  	* 
  	*/
-	private static void testFileWrite(int fileSizeinBytes, int speedInMBPerSec) throws IOException{
+	private static void testFileWrite(int iteration, int fileSizeinBytes, int speedInMBPerSec) throws IOException{
 		File file = File.createTempFile("test", ".txt"); file.deleteOnExit();
 		char[] chars = new char[1024]; Arrays.fill(chars, 'A');String longLine = new String(chars); //String of length 1KB
 
-		long start = printNextTime = System.nanoTime();
+		long start = System.nanoTime();
+		long printNextTime = start;
 		FileWriter pw = new FileWriter(file);
-		System.out.println(fileSizeinBytes);
     		for (int i = 0; i < fileSizeinBytes; i++){
         		pw.write(longLine);
 			printNextTime = printProgress(i,longLine.length(),printNextTime);
@@ -31,7 +34,7 @@ class GenerateWorkLoad {
 		}
     		pw.close();
     		long end = System.nanoTime() - start;
-    		System.out.printf("Took %.3f seconds to write to a %d MB, file rate: %.1f MB/s%n",end / 1e9, file.length() >> 20, file.length() * 1000.0 / end);
+    		System.out.printf("Iteration %d Took %.3f seconds to write to a %d MB, file rate: %.1f MB/s%n",iteration, end / 1e9, file.length() >> 20, file.length() * 1000.0 / end);
 
 	}
 
@@ -39,7 +42,7 @@ class GenerateWorkLoad {
 		long currTime = System.nanoTime();//Get current time
 		if (currTime > printNextTime){
 			long totalSizeWritten = (long) ((long)counter * (long)payloadSize);
-			System.out.println("Total data written to file:"+readableFileSize(totalSizeWritten));
+			System.out.println("Total data written to file: "+readableFileSize(totalSizeWritten));
 			printNextTime += (long)1000000000;//Add 1 sec, so that next message is printed after 1 sec
 		}
 		return printNextTime;
@@ -61,10 +64,7 @@ class GenerateWorkLoad {
 		boolean allArgumentsExists = true;
 		HashMap<String,Integer> hm = new HashMap();
 
-		if(args.length == 0){
-			hm.put("fileSizeInMB",5000);
-			hm.put("speedInMBPerSec",100);
-		}else{
+		if(args.length > 0){
 			for(int i = 0; i < args.length;i++){
 				if(args[i].equalsIgnoreCase("-h") || args[i].equalsIgnoreCase("--help")){
 					allArgumentsExists = false;
@@ -83,6 +83,9 @@ class GenerateWorkLoad {
                         System.out.println("Please specify command line arguments like: java GenerateWorkLoad --speedInMBPerSec=100 --fileSizeInMB=1000");
                         System.exit(1);
                 }
+		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB",5000);
+		if(hm.get("speedInMBPerSec") == null) hm.put("speedInMBPerSec",100);
+		if(hm.get("iterations") == null) hm.put("iterations",1);
 		return hm;	
 
 	}
