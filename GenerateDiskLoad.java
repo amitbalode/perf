@@ -3,7 +3,7 @@ import java.util.concurrent.*;
 import java.io.*;
 import java.text.*;
 
-class GenerateWorkLoad {
+class GenerateDiskLoad {
 
 	public static void main(String[] args) throws IOException{
 		Map<String,Integer> cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
@@ -71,16 +71,18 @@ class GenerateWorkLoad {
 					break;
 				}
 			}
-                        for(int i = 0; i < args.length;i++){
-				for (String retval: args[i].split(" ")){
-					String[] keyval = retval.split("=");
-					keyval[0] = keyval[0].replace("-","");
-					hm.put(keyval[0],new Integer(keyval[1]));
-				}
-                        }
+			if(allArgumentsExists){
+                        	for(int i = 0; i < args.length;i++){
+					for (String retval: args[i].split(" ")){
+						String[] keyval = retval.split("=");
+						keyval[0] = keyval[0].replace("-","");
+						hm.put(keyval[0],new Integer(keyval[1]));
+					}
+                        	}
+			}
 		}
 		if(!allArgumentsExists){
-                        System.out.println("Please specify command line arguments like: java GenerateWorkLoad --speedInMBPerSec=100 --fileSizeInMB=1000");
+                        System.out.println("\u001B[33m"+"GenerateDiskLoad is used to simulate disk load.\n Ex, java GenerateDiskLoad; GenerateDiskLoad command also take custom parameters.\n  speedInMBPerSec is used to specify speed of disk write.\n  fileSizeInMB is used to specify size of the file being written to disk.\n  iterations is used to loop through file creation multiple times.\n Ex, java GenerateDiskLoad --speedInMBPerSec=100 --fileSizeInMB=1000 --iterations=2"+"\u001B[0m");
                         System.exit(1);
                 }
 		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB",5000);
