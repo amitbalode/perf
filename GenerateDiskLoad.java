@@ -3,8 +3,17 @@ import java.util.concurrent.*;
 import java.io.*;
 import java.text.*;
 
+/**
+ *GenerateDiskLoad is used to simulate heavy to low disk writes
+ *It has throttling feature, but throttling applies only to writes which happens to page cache
+ *write(..) ----speedInMBPerSec---->PageCache ----Kernel Speed---->Disk
+ *Nevertheless, avg speed which you will demand from command line argument, will be provided by end of run.
+ */
 class GenerateDiskLoad {
 
+	/**
+ 	* JVM will enter here
+ 	*/ 
 	public static void main(String[] args) throws IOException{
 		Map<String,Integer> cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
 		System.out.println("Printing command line arguments or their default values: "+cmdLineArgs);
@@ -12,7 +21,6 @@ class GenerateDiskLoad {
 			testFileWrite(i,((int)cmdLineArgs.get("fileSizeInMB"))*1024,(int)cmdLineArgs.get("speedInMBPerSec"));
 		}
 	}
-
 
 	/**
  	*Function 
@@ -38,6 +46,9 @@ class GenerateDiskLoad {
 
 	}
 
+	/**
+ 	*printProgress function prints how much of the file is currently being written.
+ 	*/ 
 	private static long printProgress(int counter, int payloadSize, long printNextTime){
 		long currTime = System.nanoTime();//Get current time
 		if (currTime > printNextTime){
@@ -48,17 +59,20 @@ class GenerateDiskLoad {
 		return printNextTime;
 	}
 
+	/**
+ 	* readableFileSize function converts number into human readable format of MB, GB
+ 	*/ 
 	public static String readableFileSize(long size) {
     		if(size <= 0) return "0";
     		final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
     		int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
     		return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-}
+	}
 
-/**
- * Function to validate input parameters to this class file
- * At the end it will generate a hashmap of key value store of command line input arguments
- */
+	/**
+ 	* Function to validate input parameters to this class file
+ 	* At the end it will generate a hashmap of key value store of command line input arguments
+ 	*/
 	public static Map validateAndGetArguments(String[] args){
 
 		boolean allArgumentsExists = true;
