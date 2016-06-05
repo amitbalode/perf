@@ -1,53 +1,57 @@
 import java.util.*;
 import java.util.concurrent.*;
 import java.io.*;
+import java.text.*;
 
 class GenerateWorkLoad {
 
-	private static final double MEG = (Math.pow(1024, 2));
-	private static final String RECORD = "Tumse na ho payega\n";
-	private static final int RECSIZE = RECORD.getBytes().length;
-
-
-
 	public static void main(String[] args) throws IOException{
-		Map mp = validateAndGetArguments(args);
-		System.out.println(mp);
-		int fileSizeinBytes = ((int)mp.get("fileSizeInMB"))*1024;
-		int loopCounter = fileSizeinBytes/RECSIZE;
-		testFileWrite(fileSizeinBytes,(int)mp.get("speedInMBPerSec"));
+		Map<String,Integer> cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
+		testFileWrite(((int)cmdLineArgs.get("fileSizeInMB"))*1024,(int)cmdLineArgs.get("speedInMBPerSec"));
 	}
 
-	private static void testFileWrite(int fileSizeinBytes, int speedInMBPerSec) throws IOException{
-		File file = File.createTempFile("test", ".txt");
-		file.deleteOnExit();
-		char[] chars = new char[1024];
-		Arrays.fill(chars, 'A');
-		String longLine = new String(chars);
 
-		long start1 = System.nanoTime();
-		//PrintWriter pw = new PrintWriter(new FileWriter(file));
+	/**
+ 	*Function 
+	* a)To create a test.txt of size *fileSizeinBytes* and get deleted after program ends 
+ 	* b)To write with *speedInMBPerSec* speed
+ 	* 
+ 	*/
+	private static void testFileWrite(int fileSizeinBytes, int speedInMBPerSec) throws IOException{
+		File file = File.createTempFile("test", ".txt"); file.deleteOnExit();
+		char[] chars = new char[1024]; Arrays.fill(chars, 'A');String longLine = new String(chars); //String of length 1KB
+
+		long start = printNextTime = System.nanoTime();
 		FileWriter pw = new FileWriter(file);
 		System.out.println(fileSizeinBytes);
-		long lastSeenTime = start1;
-		long currTime = start1;
-		long prevTime = start1;
-		long fileSizeCheckPoint = 0;
     		for (int i = 0; i < fileSizeinBytes; i++){
         		pw.write(longLine);
-			fileSizeCheckPoint += longLine.length();
-			currTime = System.nanoTime();
-			if(currTime > lastSeenTime){ 
-				System.out.printf("Took %.3f seconds to write to %d MB, file rate: %.1f MB/s%n",(currTime-prevTime) / 1e9, (fileSizeCheckPoint) >> 20, fileSizeCheckPoint * 1000.0 / (currTime-prevTime)); 
-				lastSeenTime += (long)1000000000;prevTime = currTime; fileSizeCheckPoint = 0;
-			}
-			if(i%(speedInMBPerSec) == 0) try { TimeUnit.NANOSECONDS.sleep(50000); } catch (InterruptedException e) { }
+			printNextTime = printProgress(i,longLine.length(),printNextTime);
+			if(i%(speedInMBPerSec*2) == 0) try { TimeUnit.NANOSECONDS.sleep(1); } catch (InterruptedException e) { } //Check after 1MB is written
 		}
     		pw.close();
-    		long time1 = System.nanoTime() - start1;
-    		System.out.printf("Took %.3f seconds to write to a %d MB, file rate: %.1f MB/s%n",time1 / 1e9, file.length() >> 20, file.length() * 1000.0 / time1);
+    		long end = System.nanoTime() - start;
+    		System.out.printf("Took %.3f seconds to write to a %d MB, file rate: %.1f MB/s%n",end / 1e9, file.length() >> 20, file.length() * 1000.0 / end);
 
 	}
+
+	private static long printProgress(int counter, int payloadSize, long printNextTime){
+		long currTime = System.nanoTime();//Get current time
+		if (currTime > printNextTime){
+			long totalSizeWritten = (long) ((long)counter * (long)payloadSize);
+			System.out.println("Total data written to file:"+readableFileSize(totalSizeWritten));
+			printNextTime += (long)1000000000;//Add 1 sec, so that next message is printed after 1 sec
+		}
+		return printNextTime;
+	}
+
+	public static String readableFileSize(long size) {
+    		if(size <= 0) return "0";
+    		final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
+    		int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
+    		return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+}
+
 /**
  * Function to validate input parameters to this class file
  * At the end it will generate a hashmap of key value store of command line input arguments
@@ -55,10 +59,11 @@ class GenerateWorkLoad {
 	public static Map validateAndGetArguments(String[] args){
 
 		boolean allArgumentsExists = true;
-		HashMap hm = new HashMap();
+		HashMap<String,Integer> hm = new HashMap();
 
 		if(args.length == 0){
-			allArgumentsExists = false;
+			hm.put("fileSizeInMB",5000);
+			hm.put("speedInMBPerSec",100);
 		}else{
 			for(int i = 0; i < args.length;i++){
 				if(args[i].equalsIgnoreCase("-h") || args[i].equalsIgnoreCase("--help")){
