@@ -15,10 +15,10 @@ class GenerateDiskLoad {
  	* JVM will enter here
  	*/ 
 	public static void main(String[] args) throws IOException{
-		Map<String,Integer> cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
+		Map cmdLineArgs = validateAndGetArguments(args);//Command line arguments are stored as key value in a map
 		System.out.println("Printing command line arguments or their default values: "+cmdLineArgs);
-		for (int i = 0; i < (int)cmdLineArgs.get("iterations"); i++){
-			testFileWrite(i,((int)cmdLineArgs.get("fileSizeInMB"))*1024,(int)cmdLineArgs.get("speedInMBPerSec"));
+		for (int i = 0; i < Integer.parseInt((String)cmdLineArgs.get("iterations")); i++){
+			testFileWrite(i,(Integer.parseInt((String)cmdLineArgs.get("fileSizeInMB")))*1024,Integer.parseInt((String)cmdLineArgs.get("speedInMBPerSec")),(String)cmdLineArgs.get("createTmpFileInDir"));
 		}
 	}
 
@@ -28,8 +28,8 @@ class GenerateDiskLoad {
  	* b)To write with *speedInMBPerSec* speed
  	* 
  	*/
-	private static void testFileWrite(int iteration, int fileSizeinBytes, int speedInMBPerSec) throws IOException{
-		File file = File.createTempFile("test", ".txt"); file.deleteOnExit();
+	private static void testFileWrite(int iteration, int fileSizeinBytes, int speedInMBPerSec, String filePath) throws IOException{
+		File file = File.createTempFile("test", ".txt",new File(filePath)); file.deleteOnExit();
 		char[] chars = new char[1024]; Arrays.fill(chars, 'A');String longLine = new String(chars); //String of length 1KB
 
 		long start = System.nanoTime();
@@ -76,7 +76,7 @@ class GenerateDiskLoad {
 	public static Map validateAndGetArguments(String[] args){
 
 		boolean allArgumentsExists = true;
-		HashMap<String,Integer> hm = new HashMap();
+		HashMap<String,Object> hm = new HashMap();
 
 		if(args.length > 0){
 			for(int i = 0; i < args.length;i++){
@@ -90,7 +90,7 @@ class GenerateDiskLoad {
 					for (String retval: args[i].split(" ")){
 						String[] keyval = retval.split("=");
 						keyval[0] = keyval[0].replace("-","");
-						hm.put(keyval[0],new Integer(keyval[1]));
+						hm.put(keyval[0],keyval[1]);
 					}
                         	}
 			}
@@ -102,6 +102,7 @@ class GenerateDiskLoad {
 		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB",5000);
 		if(hm.get("speedInMBPerSec") == null) hm.put("speedInMBPerSec",100);
 		if(hm.get("iterations") == null) hm.put("iterations",1);
+		if(hm.get("createTmpFileInDir") == null) hm.put("createTmpFileInDir","/tmp/");
 		return hm;	
 
 	}
