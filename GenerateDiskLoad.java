@@ -99,9 +99,9 @@ class GenerateDiskLoad {
                         System.out.println("\u001B[33m"+"GenerateDiskLoad is used to simulate disk load.\n Ex, java GenerateDiskLoad; GenerateDiskLoad command also take custom parameters.\n  speedInMBPerSec is used to specify speed of disk write.\n  fileSizeInMB is used to specify size of the file being written to disk.\n  iterations is used to loop through file creation multiple times.\n Ex, java GenerateDiskLoad --speedInMBPerSec=100 --fileSizeInMB=1000 --iterations=2"+"\u001B[0m");
                         System.exit(1);
                 }
-		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB",5000);
-		if(hm.get("speedInMBPerSec") == null) hm.put("speedInMBPerSec",100);
-		if(hm.get("iterations") == null) hm.put("iterations",1);
+		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB","5000");
+		if(hm.get("speedInMBPerSec") == null) hm.put("speedInMBPerSec","100");
+		if(hm.get("iterations") == null) hm.put("iterations","1");
 		if(hm.get("createTmpFileInDir") == null) hm.put("createTmpFileInDir","/tmp/");
 		return hm;	
 
