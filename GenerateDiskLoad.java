@@ -53,7 +53,8 @@ class GenerateDiskLoad {
 		long currTime = System.nanoTime();//Get current time
 		if (currTime > printNextTime){
 			long totalSizeWritten = (long) ((long)counter * (long)payloadSize);
-			System.out.println("Total data written to file: "+readableFileSize(totalSizeWritten));
+			VMStatReader vm = new VMStatReader("/proc/vmstat");Map map = vm.getVMStatusRecord();
+			System.out.println((new Date())+" - Total data written to file: "+readableFileSize(totalSizeWritten)+ ", Dirty pages waiting to be written to disk:"+(String)map.get("nr_dirty")+ ", Dirty pages actively being written:"+(String)map.get("nr_writeback"));
 			printNextTime += (long)1000000000;//Add 1 sec, so that next message is printed after 1 sec
 		}
 		return printNextTime;
@@ -102,9 +103,33 @@ class GenerateDiskLoad {
 		if(hm.get("fileSizeInMB") == null) hm.put("fileSizeInMB","5000");
 		if(hm.get("speedInMBPerSec") == null) hm.put("speedInMBPerSec","100");
 		if(hm.get("iterations") == null) hm.put("iterations","1");
-		if(hm.get("createTmpFileInDir") == null) hm.put("createTmpFileInDir","/tmp/");
+		if(hm.get("createTmpFileInDir") == null) hm.put("createTmpFileInDir",System.getProperty("user.dir"));
 		return hm;	
 
 	}
 
+}
+
+class VMStatReader {
+
+	private String vmStatFile = null;
+
+	public VMStatReader(String vmStatFile){
+		this.vmStatFile = vmStatFile;
+	}
+	public Map getVMStatusRecord(){
+		String line = null;
+		Map<String, String> map = new HashMap<String, String>();
+
+		try{
+			BufferedReader bfr = new BufferedReader(new FileReader(this.vmStatFile));
+			while ((line = bfr.readLine()) != null) {
+				String parts[] = line.split(" ");
+				map.put(parts[0], parts[1]);
+			}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		return map;
+	}
 }
